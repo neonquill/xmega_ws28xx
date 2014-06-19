@@ -108,8 +108,8 @@ setup_usart(void) {
    */
   USARTD0.CTRLC = USART_CMODE_MSPI_gc;
 
-  /* Setting BSEL to 2 and BSCALE to 0 should get a frequency of 5.333 MHz. */
-  USARTD0.BAUDCTRLA = 2;
+  /* Setting BSEL to 4 and BSCALE to 0 should get a frequency of 3.2 MHz. */
+  USARTD0.BAUDCTRLA = 4;
   USARTD0.BAUDCTRLB = 0;
 }
 
@@ -139,13 +139,13 @@ loop(void) {
   PORTD.OUTSET = PIN5_bm;
   /*
    * Output is inverted.
-   * 0 bit = 0b001111
-   * 1 bit = 0b111100
-   * Note, it's only 6 bits per bit to the WS2812.
+   * 0 bit = 0b0111
+   * 1 bit = 0b1110
+   * Note, there are 4 UART bits per per bit to the WS2812.
    */
-  USARTD0.DATA = 0b00001100;
+  USARTD0.DATA = 0b01110111;
   asm("nop");
-  USARTD0.DATA = 0b00110000;
+  USARTD0.DATA = 0b11101110;
   while ((USARTD0.STATUS & USART_TXCIF_bm) == 0) {}
   USARTD0.STATUS = USART_TXCIF_bm;
   PORTD.OUTCLR = PIN5_bm;
