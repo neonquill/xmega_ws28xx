@@ -265,8 +265,9 @@ setup_dma(void) {
 void
 setup(void) {
   setup_processor_clocks();
-  setup_usart();
   setup_pins();
+  setup_usart();
+  setup_dma();
 
   // Enable low and medium level interrupts.
   PMIC.CTRL = PMIC_LOLVLEN_bm | PMIC_MEDLVLEN_bm;
@@ -284,9 +285,9 @@ loop(void) {
 
   set_pixel_color(0, red, green, blue);
   PORTD.OUTSET = PIN5_bm;
-  USARTD0.DATA = led_data[0];
   start_dma();
   PORTD.OUTCLR = PIN5_bm;
+  red++;
 
   _delay_ms(1000);
 }
