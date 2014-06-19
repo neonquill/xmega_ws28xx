@@ -92,12 +92,32 @@ setup_processor_clocks(void) {
 }
 
 /**
+ * Configure the USART.
+ */
+static void
+setup_usart(void) {
+  /* Only enable the transmitter. */
+  USARTD0.CTRLB = USART_TXEN_bm;
+
+  /*
+   * Master SPI mode,
+   * MSB transmitted first,
+   * leading edge sample (SPI Mode 0).
+   */
+  USARTD0.CTRLC = USART_CMODE_MSPI_gc;
+
+  /* Setting BSEL to 2 and BSCALE to 0 should get a frequency of 5.333 MHz. */
+  USARTD0.BAUDCTRLA = 2;
+  USARTD0.BAUDCTRLB = 0;
+}
+
+/**
  * Main set up routine.
  */
 void
 setup(void) {
   setup_processor_clocks();
-
+  setup_usart();
   setup_pins();
 
   // Enable low and medium level interrupts.
