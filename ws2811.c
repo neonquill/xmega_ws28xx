@@ -125,6 +125,39 @@ set_pixel_color(uint8_t pixel, uint8_t red, uint8_t green, uint8_t blue) {
 }
 
 /**
+ * Interrupt routine for a completed DMA transfer.
+ */
+ISR(DMA_CH0_vect) {
+  PORTA.OUTTGL = PIN1_bm;
+  /* Clear the interrupt flag so we stop getting called. */
+  DMA.INTFLAGS |= DMA_CH0TRNIF_bm;
+  // PORTA.OUTCLR = PIN1_bm;
+}
+
+/**
+ * Start a DMA transfer to send data to the chip.
+ */
+static void
+start_dma(void) {
+  /* Enable the DMA transaction complete interrupt at low. */
+  /* XXX Maybe move this into the setup. */
+  DMA.CH0.CTRLB = DMA_CH_TRNINTLVL_LO_gc;
+
+  /* Transfer a all the LED data. */
+  DMA.CH0.TRFCNT = NUM_DATA_BYTES;
+
+  /* Transfer 1 block. */
+  DMA.CH0.REPCNT = 1;
+
+  /*
+   * Start the transaction.
+   * Note: The data register is empty, so it will automatically start the
+   *   transfer.
+   */
+  DMA.CH0.CTRLA |= DMA_CH_ENABLE_bm;
+}
+
+/**
  * Set up all the processor clock inputs.
  */
 void
@@ -170,6 +203,63 @@ setup_usart(void) {
 }
 
 /**
+ * Set up the DMA controller.
+ *
+ * Used by the LED driver to copy the LED bits to the USART.
+ */
+void
+setup_dma(void) {
+  uint16_t temp;
+
+  // LED controller uses DMA 0.
+
+  // Enable DMA, double buffer disabled, round robin priority.
+  DMA.CTRL = DMA_RESET_bm;
+  DMA.CTRL = DMA_ENABLE_bm;
+
+  /* Set up DMA0 to transfer the data into the USART. */
+
+  /* Reset, just to be safe. */
+  DMA.CH0.CTRLA = DMA_CH_RESET_bm;
+
+  /*
+   * DMA_CH_SINGLE_bm:
+   *   Just do a single burst transfer each time the trigger fires.
+   * DMA_CH_BURSTLEN_1BYTE_gc:
+   *   Each burst transfers a single byte.
+   */
+  DMA.CH0.CTRLA = DMA_CH_SINGLE_bm | DMA_CH_BURSTLEN_1BYTE_gc;
+
+  /*
+   * DMA_CH_SRCRELOAD_TRANSACTION_gc:
+   *   Reload the original src address after every transaction.
+   * DMA_CH_SRCDIR_INC_gc:
+   *   Increment the src address after every burst.
+   * DMA_CH_DESTRELOAD_NONE_gc:
+   *   Don't reload the destination address after the transaction.
+   * DMA_CH_DESTDIR_FIXED_gc:
+   *   Keep the destination address fixed.
+   */
+  DMA.CH0.ADDRCTRL = (DMA_CH_SRCRELOAD_TRANSACTION_gc | DMA_CH_SRCDIR_INC_gc |
+                      DMA_CH_DESTRELOAD_NONE_gc | DMA_CH_DESTDIR_FIXED_gc);
+
+  /* Transfers are triggered when the USART D0 data register is empty. */
+  DMA.CH0.TRIGSRC = DMA_CH_TRIGSRC_USARTD0_DRE_gc;
+
+  /* Set the source address to the beginning of the led_data array. */
+  temp = (uint16_t)led_data;
+  DMA.CH0.SRCADDR0 = temp;
+  DMA.CH0.SRCADDR1 = temp >> 8;
+  DMA.CH0.SRCADDR2 = 0;
+
+  /* Set the destination address to the USART data register. */
+  temp = (uint16_t)(&(USARTD0.DATA));
+  DMA.CH0.DESTADDR0 = temp;
+  DMA.CH0.DESTADDR1 = temp >> 8;
+  DMA.CH0.DESTADDR2 = 0;
+}
+
+/**
  * Main set up routine.
  */
 void
@@ -191,16 +281,11 @@ setup(void) {
 void
 loop(void) {
   static uint8_t red = 0, green = 0, blue = 0;
-  blink(1);
 
   set_pixel_color(0, red, green, blue);
-
   PORTD.OUTSET = PIN5_bm;
   USARTD0.DATA = led_data[0];
-  asm("nop");
-  USARTD0.DATA = led_data[1];
-  while ((USARTD0.STATUS & USART_TXCIF_bm) == 0) {}
-  USARTD0.STATUS = USART_TXCIF_bm;
+  start_dma();
   PORTD.OUTCLR = PIN5_bm;
 
   _delay_ms(1000);
