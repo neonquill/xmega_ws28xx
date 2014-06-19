@@ -35,6 +35,8 @@ setup_pins(void) {
   /* Port D: all outputs. */
   PORTD.DIR = 0xff;
   PORTD.OUT = 0x00;
+  /* Make pin3 inverted. */
+  PORTD.PIN3CTRL = PORT_INVEN_bm;
 
   PORTE.DIR = 0xff;
   PORTE.OUT = 0x00;
@@ -133,6 +135,20 @@ setup(void) {
 void
 loop(void) {
   blink(1);
+
+  PORTD.OUTSET = PIN5_bm;
+  /*
+   * Output is inverted.
+   * 0 bit = 0b001111
+   * 1 bit = 0b111100
+   * Note, it's only 6 bits per bit to the WS2812.
+   */
+  USARTD0.DATA = 0b00001100;
+  asm("nop");
+  USARTD0.DATA = 0b00110000;
+  while ((USARTD0.STATUS & USART_TXCIF_bm) == 0) {}
+  USARTD0.STATUS = USART_TXCIF_bm;
+  PORTD.OUTCLR = PIN5_bm;
 
   _delay_ms(1000);
 }
