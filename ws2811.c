@@ -66,7 +66,63 @@ blink(int count) {
 /*
  * Globals.
  */
+enum {
+  NUM_PIXELS = 1,
 
+  /* Each pixel takes 3 bytes * 4 in bits per out bit = 12 bytes. */
+  BYTES_PER_PIXEL = 3 * 4,
+
+  /* 3 bytes per pixel, 4 data bits per output bit. */
+  NUM_DATA_BYTES = NUM_PIXELS * BYTES_PER_PIXEL,
+};
+
+static uint8_t led_data[NUM_DATA_BYTES];
+
+/*
+ * Output is inverted.
+ * 0 bit = 0b0111
+ * 1 bit = 0b1110
+ * Note, there are 4 UART bits per per bit to the WS2812.
+ */
+static uint8_t pair_to_data_byte[4] = {
+  /* 0b00 */
+  0b01110111,
+  /* 0b01 */
+  0b01111110,
+  /* 0b10 */
+  0b11100111,
+  /* 0b11 */
+  0b11101110
+};
+
+void
+set_pixel_color(uint8_t pixel, uint8_t red, uint8_t green, uint8_t blue) {
+  uint8_t pair;
+  uint8_t offset;
+
+  offset = pixel * BYTES_PER_PIXEL;
+
+  /* Green */
+  for (pair = 0; pair < 4; pair++) {
+    led_data[offset] = pair_to_data_byte[green & 0b11];
+    green >>= 2;
+    offset++;
+  }
+
+  /* Red */
+  for (pair = 0; pair < 4; pair++) {
+    led_data[offset] = pair_to_data_byte[red & 0b11];
+    red >>= 2;
+    offset++;
+  }
+
+  /* Blue */
+  for (pair = 0; pair < 4; pair++) {
+    led_data[offset] = pair_to_data_byte[blue & 0b11];
+    blue >>= 2;
+    offset++;
+  }
+}
 
 /**
  * Set up all the processor clock inputs.
@@ -134,18 +190,15 @@ setup(void) {
  */
 void
 loop(void) {
+  static uint8_t red = 0, green = 0, blue = 0;
   blink(1);
 
+  set_pixel_color(0, red, green, blue);
+
   PORTD.OUTSET = PIN5_bm;
-  /*
-   * Output is inverted.
-   * 0 bit = 0b0111
-   * 1 bit = 0b1110
-   * Note, there are 4 UART bits per per bit to the WS2812.
-   */
-  USARTD0.DATA = 0b01110111;
+  USARTD0.DATA = led_data[0];
   asm("nop");
-  USARTD0.DATA = 0b11101110;
+  USARTD0.DATA = led_data[1];
   while ((USARTD0.STATUS & USART_TXCIF_bm) == 0) {}
   USARTD0.STATUS = USART_TXCIF_bm;
   PORTD.OUTCLR = PIN5_bm;
