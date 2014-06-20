@@ -100,27 +100,28 @@ set_pixel_color(uint8_t pixel, uint8_t red, uint8_t green, uint8_t blue) {
   uint8_t pair;
   uint8_t offset;
 
-  offset = pixel * BYTES_PER_PIXEL;
+  /* Start at the end and work forward. */
+  offset = (pixel + 1) * BYTES_PER_PIXEL - 1;
 
-  /* Green */
+  /* Blue */
   for (pair = 0; pair < 4; pair++) {
-    led_data[offset] = pair_to_data_byte[green & 0b11];
-    green >>= 2;
-    offset++;
+    led_data[offset] = pair_to_data_byte[blue & 0b11];
+    blue >>= 2;
+    offset--;
   }
 
   /* Red */
   for (pair = 0; pair < 4; pair++) {
     led_data[offset] = pair_to_data_byte[red & 0b11];
     red >>= 2;
-    offset++;
+    offset--;
   }
 
-  /* Blue */
+  /* Green */
   for (pair = 0; pair < 4; pair++) {
-    led_data[offset] = pair_to_data_byte[blue & 0b11];
-    blue >>= 2;
-    offset++;
+    led_data[offset] = pair_to_data_byte[green & 0b11];
+    green >>= 2;
+    offset--;
   }
 }
 
