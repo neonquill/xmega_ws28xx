@@ -95,32 +95,44 @@ static uint8_t pair_to_data_byte[4] = {
   0b00010001
 };
 
+/**
+ * Set color values for a given pixel.
+ *
+ * Ordering is the same as the driver chip expects.
+ * Most of the devices are green, red, blue.
+ * Some are red, green, blue.
+ *
+ * @param[in] pixel  The index of the pixel.
+ * @param[in] first  The first color value (normally green).
+ * @param[in] second  The second color value (normally red).
+ * @param[in] third  The third color value (normally blue).
+ */
 void
-set_pixel_color(uint8_t pixel, uint8_t red, uint8_t green, uint8_t blue) {
+set_pixel_color(uint8_t pixel, uint8_t first, uint8_t second, uint8_t third) {
   uint8_t pair;
   uint8_t offset;
 
   /* Start at the end and work forward. */
   offset = (pixel + 1) * BYTES_PER_PIXEL - 1;
 
-  /* Blue */
+  /* Third */
   for (pair = 0; pair < 4; pair++) {
-    led_data[offset] = pair_to_data_byte[blue & 0b11];
-    blue >>= 2;
+    led_data[offset] = pair_to_data_byte[third & 0b11];
+    third >>= 2;
     offset--;
   }
 
-  /* Red */
+  /* Second */
   for (pair = 0; pair < 4; pair++) {
-    led_data[offset] = pair_to_data_byte[red & 0b11];
-    red >>= 2;
+    led_data[offset] = pair_to_data_byte[second & 0b11];
+    second >>= 2;
     offset--;
   }
 
-  /* Green */
+  /* First */
   for (pair = 0; pair < 4; pair++) {
-    led_data[offset] = pair_to_data_byte[green & 0b11];
-    green >>= 2;
+    led_data[offset] = pair_to_data_byte[first & 0b11];
+    first >>= 2;
     offset--;
   }
 }
