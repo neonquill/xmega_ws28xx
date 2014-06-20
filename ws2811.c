@@ -294,15 +294,35 @@ setup(void) {
  */
 void
 loop(void) {
+  static int8_t increment[3] = {5, 0, 0};
   static uint8_t red = 0, green = 0, blue = 0;
 
+  /* 5mm through-hole LEDs are RGB, not GRB. */
   set_pixel_color(0, red, green, blue);
   PORTD.OUTSET = PIN5_bm;
   start_dma();
   PORTD.OUTCLR = PIN5_bm;
-  red += 5;
+  if (red == 255) {
+    increment[0] = -5;
+  } else if (green == 255) {
+    increment[1] = -5;
+  } else if (blue == 255) {
+    increment[2] = -5;
+  } else if (red == 0 && increment[0] == -5) {
+    increment[0] = 0;
+    increment[1] = 5;
+  } else if (green == 0 && increment[1] == -5) {
+    increment[1] = 0;
+    increment[2] = 5;
+  } else if (blue == 0 && increment[2] == -5) {
+    increment[2] = 0;
+    increment[0] = 5;
+  }
+  red += increment[0];
+  green += increment[1];
+  blue += increment[2];
 
-  _delay_ms(1000);
+  _delay_ms(20);
 }
 
 int
