@@ -288,7 +288,7 @@ loop(void) {
   PORTD.OUTSET = PIN5_bm;
   start_dma();
   PORTD.OUTCLR = PIN5_bm;
-  red++;
+  red += 5;
 
   _delay_ms(1000);
 }
