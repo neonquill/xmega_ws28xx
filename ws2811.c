@@ -81,18 +81,18 @@ static uint8_t led_data[NUM_DATA_BYTES];
 /*
  * Output is inverted.
  * 0 bit = 0b0111
- * 1 bit = 0b1110
+ * 1 bit = 0b0001
  * Note, there are 4 UART bits per per bit to the WS2812.
  */
 static uint8_t pair_to_data_byte[4] = {
   /* 0b00 */
   0b01110111,
   /* 0b01 */
-  0b01111110,
+  0b01110001,
   /* 0b10 */
-  0b11100111,
+  0b00010111,
   /* 0b11 */
-  0b11101110
+  0b00010001
 };
 
 void
