@@ -9,11 +9,8 @@
  * Pins:
  *
  * Port D: (uses SPI)
- *  0: LED GSCLK
- *  1: LED SCLK
- *  2: LED XLAT
- *  3: LED SIN
- *  4: LED Blank
+ *  1: SPI clock (don't connect)
+ *  3: WS2811 Data in.
  */
 
 /**
