@@ -30,5 +30,5 @@ LED](http://www.adafruit.com/products/1837).
 
 ## License
 
-Unless otherwise noted, all files are released into the public as
-described in the UNLICENSE file.
+Unless otherwise noted, all files are covered by the Blue Oak 1.0.0 license
+as described in the LICENSE.md file.
